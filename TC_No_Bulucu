@@ -1,0 +1,39 @@
+# Verilen dizindeki dosyaların içerisinde T.C. Kimlik No. algoritmasına uyan değerleri arar. 
+
+import os
+import re
+
+def tcno_dogrula(tcno):
+    tcno = str(tcno)
+    if tcno[0] == '0' or len(tcno) != 11:
+        return False
+    ilkon_total = hane_tek = hane_cift = 0
+    for i in range(9):
+        j = int(tcno[i])
+        if i % 2 == 0:
+            hane_tek += j
+        else:
+            hane_cift += j
+        ilkon_total += j
+    if (hane_tek * 7 - hane_cift) % 10 != int(tcno[9]):
+        return False
+    ilkon_total += int(tcno[9])
+    if ilkon_total % 10 != int(tcno[10]):
+        return False
+    return True
+
+def scan_files(directory):
+    tcno_pattern = re.compile(r'\b\d{11}\b')
+    for root, dirs, files in os.walk(directory):
+        for filename in files:
+            filepath = os.path.join(root, filename)
+            with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
+                content = file.read()
+                potential_tcnos = tcno_pattern.findall(content)
+                valid_tcnos = [tcno for tcno in potential_tcnos if tcno_dogrula(tcno)]
+                if valid_tcnos:
+                    print(f"Valid TCNOs found in {filepath}: {valid_tcnos}")
+
+# Example usage
+directory = "/path/to/directory"  # Replace with the actual directory path
+scan_files(directory)
