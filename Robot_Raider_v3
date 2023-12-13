@@ -1,0 +1,83 @@
+# UNUTMA: pip install requests
+# Robot Raider written in BASH was rewritten in Python
+
+import re
+import os
+import requests
+import subprocess
+import sys
+import time
+
+version = "0.3"
+
+def intro():
+    print("\nRobotRaider v{} (2023) - Alper Basaran".format(version))
+    print("\nInitial BASH code was mostly by WeakNet Labs  - Douglas Berdeaux\n")
+
+def get_domain():
+    regexp = re.compile(r"^[a-zA-Z0-9_-]+\.[a-zA-Z]+\.[a-zA-Z]+$")
+    domain = input("Please enter Domain name (format: domain.com): ")
+
+    if not domain:
+        print("You did not enter a domain name.")
+        return get_domain()
+    elif not regexp.match(domain):
+        print("That was not a domain name.")
+        return get_domain()
+    return domain
+
+def process_robots_txt(domain):
+    try:
+        response = requests.get(f'http://{domain}/robots.txt')
+        response.raise_for_status()
+        lines = response.text.split('\n')
+    except requests.RequestException:
+        print(f"Could not find a robots.txt file at {domain}.")
+        sys.exit()
+
+    print("Success!\nProcessing robots.txt file.")
+
+    with open(f"{domain}-robots.txt", "w") as file:
+        for line in lines:
+            if "Disallow" in line:
+                file.write(line + '\n')
+
+def modify_robots_txt(domain):
+    with open(f"{domain}-robots.txt", "r") as file:
+        lines = file.readlines()
+
+    with open(f"{domain}-robots.txt", "w") as file:
+        for line in lines:
+            match = re.search(r'[^\/]+(\/[^\/]+\/).*', line)
+            if match:
+                file.write(match.group(1) + '\n')
+
+def open_in_firefox(domain):
+    try:
+        firefox_path = subprocess.check_output(["which", "firefox"]).decode().strip()
+        if firefox_path:
+            ans = input("Shall I start a Firefox session with each link in a new tab? [y/n]: ")
+            if ans.lower() == 'y':
+                print("Starting Firefox with {}.".format(firefox_path))
+                subprocess.Popen([firefox_path])
+                time.sleep(3)
+                with open(f"{domain}-robots.txt", "r") as file:
+                    for line in file:
+                        subprocess.Popen([firefox_path, '-new-tab', f"http://{domain}{line.strip()}"])
+                        time.sleep(1)
+    except subprocess.CalledProcessError:
+        print("You don't have Firefox installed. Exiting.")
+        sys.exit(1)
+
+def main():
+    intro()
+    domain = get_domain()
+    if os.path.isfile(f"{domain}-robots.txt"):
+        os.remove(f"{domain}-robots.txt")
+
+    process_robots_txt(domain)
+    modify_robots_txt(domain)
+    open_in_firefox(domain)
+
+if __name__ == "__main__":
+    main()
