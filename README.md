@@ -1,2 +1,3 @@
-# owasp_ankara
-OWASP Ankara kapsamında geliştirdiğimiz uygulama güvenliği betikleridir. 
+# OWASP Ankara
+
+OWASP Ankara kapsamında geliştirdiğimiz/konuştuğumuz/aklımıza gelen uygulama güvenliği betikleri.
