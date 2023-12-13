@@ -1,0 +1,29 @@
+# UNUTMA: pip install requests beautifulsoup4
+
+import requests
+from urllib.parse import urlparse, urljoin
+from bs4 import BeautifulSoup
+
+def get_subdomains(main_url):
+    try:
+        response = requests.get(main_url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        links = set()
+        main_domain = urlparse(main_url).netloc
+
+        for link in soup.find_all('a', href=True):
+            href = link['href']
+            full_url = urljoin(main_url, href)
+            domain = urlparse(full_url).netloc
+
+            # Check if the domain is a subdomain of the main domain
+            if main_domain in domain and domain != main_domain:
+                links.add(full_url)
+
+        return list(links)
+    except requests.RequestException as e:
+        return f"Error: {e}"
+
+# Example usage
+subdomains = get_subdomains('https://example.com')
+print(subdomains)
