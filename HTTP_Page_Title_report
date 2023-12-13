@@ -1,0 +1,23 @@
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
+
+def get_page_title(domain):
+    try:
+        response = requests.get(f'http://{domain}', timeout=5)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        return soup.title.string.strip() if soup.title else 'No Title Found'
+    except Exception as e:
+        return f'Error: {e}'
+
+def generate_report(input_file, output_file):
+    with open(input_file, 'r') as domains, open(output_file, 'w') as report:
+        for domain in domains:
+            domain = domain.strip()
+            if domain:
+                title = get_page_title(domain)
+                date_of_scan = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                report.write(f'{domain}, "{title}", {date_of_scan}\n')
+
+# Example usage
+generate_report('domains.txt', 'report.txt')
