@@ -1,0 +1,28 @@
+# UNUTMA: pip install requests beautifulsoup4
+
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+def find_js_files(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Ensure the request was successful
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        js_files = []
+        for script in soup.find_all("script"):
+            src = script.get("src")
+            if src:  # Only consider script tags with a src attribute
+                full_url = urljoin(url, src)  # Handle relative URLs
+                js_files.append(full_url)
+
+        return js_files
+    except requests.RequestException as e:
+        print(f"Error fetching the URL: {e}")
+        return []
+
+# Example usage
+url = "https://example.com"
+js_files = find_js_files(url)
+print(js_files)
