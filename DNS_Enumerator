@@ -1,0 +1,34 @@
+# UNUTMA: pip install dnspython
+# KULLANIM: python DNS_Enumerator.py -d example.com -w wordlist.txt
+
+import argparse
+import dns.resolver
+
+def send_dns_requests(domain, wordlist_file):
+    try:
+        with open(wordlist_file, 'r') as file:
+            subdomains = [line.strip() for line in file]
+
+        for subdomain in subdomains:
+            target = f"{subdomain}.{domain}"
+            try:
+                answers = dns.resolver.resolve(target, 'A')
+                for answer in answers:
+                    print(f"{target} has address {answer}")
+            except dns.resolver.NXDOMAIN:
+                print(f"{target} does not exist.")
+            except Exception as e:
+                print(f"Error resolving {target}: {e}")
+    except FileNotFoundError:
+        print(f"Wordlist file {wordlist_file} not found.")
+
+def main():
+    parser = argparse.ArgumentParser(description="DNS Subdomain Enumerator")
+    parser.add_argument("-d", "--domain", required=True, help="The domain to query against")
+    parser.add_argument("-w", "--wordlist", required=True, help="The wordlist file")
+    args = parser.parse_args()
+
+    send_dns_requests(args.domain, args.wordlist)
+
+if __name__ == "__main__":
+    main()
