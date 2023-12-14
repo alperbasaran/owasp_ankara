@@ -1,0 +1,50 @@
+from zipfile import ZipFile
+import os
+import re
+
+def extract_urls_from_apk(apk_path):
+    """
+    Extracts URLs from an APK file.
+    
+    :param apk_path: Path to the APK file
+    :return: List of URLs found in the APK file
+    """
+    urls = []
+
+    # Open the APK as a zip file
+    with ZipFile(apk_path, 'r') as zip_ref:
+        # Extract all files to a temporary directory
+        temp_dir = "temp_apk_contents"
+        zip_ref.extractall(temp_dir)
+
+        # Regex pattern for URLs
+        url_pattern = re.compile(
+            r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+
+        # Iterate over all extracted files
+        for root, dirs, files in os.walk(temp_dir):
+            for file in files:
+                try:
+                    # Open each file and search for URLs
+                    with open(os.path.join(root, file), 'r', encoding='utf-8', errors='ignore') as file_obj:
+                        file_contents = file_obj.read()
+                        found_urls = url_pattern.findall(file_contents)
+                        urls.extend(found_urls)
+                except Exception as e:
+                    # Handle any exceptions (e.g., binary files)
+                    pass
+
+        # Clean up by removing the temporary directory
+        for root, dirs, files in os.walk(temp_dir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(temp_dir)
+
+    return list(set(urls))  # Remove duplicates
+
+# Example usage
+apk_path = 'path_to_your_apk_file.apk'
+urls_in_apk = extract_urls_from_apk(apk_path)
+print(urls_in_apk)
