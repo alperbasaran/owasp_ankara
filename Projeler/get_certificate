@@ -1,0 +1,64 @@
+# Requirements: pip3 install cryptography
+# Usage: Place the URL list in the same directory as the script. URLs should be line by line.
+
+import ssl
+import socket
+from urllib.parse import urlparse
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+
+def get_certificate_details(url):
+    try:
+        context = ssl.create_default_context()
+        with context.wrap_socket(socket.create_connection((urlparse(url).hostname, 443)),
+                                 server_hostname=urlparse(url).hostname) as sock:
+            # Get the SSL/TLS certificate
+            cert_bin = sock.getpeercert(binary_form=True)
+
+            # Parse the certificate
+            x509_cert = x509.load_der_x509_certificate(cert_bin, default_backend())
+
+            # Extract certificate details
+            subject = x509_cert.subject
+            issuer = x509_cert.issuer
+            not_valid_before = x509_cert.not_valid_before
+            not_valid_after = x509_cert.not_valid_after
+            key_size = x509_cert.public_key().key_size
+            signature_algorithm = x509_cert.signature_algorithm_oid
+            fingerprint = x509_cert.fingerprint(hashes.SHA256())
+
+            # Print certificate details
+            output = f"Certificate Subject: {subject}\n" \
+                     f"Signature Algorithm: {signature_algorithm}\n" \
+                     f"Key Size: {key_size}\n" \
+                     f"Fingerprint: {fingerprint.hex()}\n" \
+                     f"Valid From: {not_valid_before}\n" \
+                     f"Valid Until: {not_valid_after}\n" \
+                     f"Issuer: {issuer}"
+
+            return output.strip()
+
+    except Exception as e:
+        return f"Error: {e}"
+
+def process_domains(input_file_path, output_file_path):
+    try:
+        with open(input_file_path, 'r') as input_file, open(output_file_path, 'w') as output_file:
+            for line in input_file:
+                url = line.strip()
+                result = get_certificate_details(url)
+                output_file.write(result + '\n-------------------------------------------------------\n')
+
+        print("Process completed. Output file:", output_file_path)
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+# File Directories
+input_file_path = "domains.txt"
+output_file_path = "report.txt"
+
+
+process_domains(input_file_path, output_file_path)
+
