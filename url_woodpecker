@@ -1,0 +1,41 @@
+### Requirements: pip3 install requests
+### Usage : python3 woodpecker.py 
+### Enter your URL (Exp. https://examplesite.com/)
+### Enter your wordlist: example_wordlist.txt
+
+import requests
+from urllib.parse import urljoin
+
+class UrlTester:
+    def __init__(self):
+        self.base_url = input("Base URL giriniz: ")
+        self.filename = input("Dosya adını giriniz: ")
+
+    def test_urls(self):
+        try:
+            with open(self.filename, "r") as file:
+                paths = file.readlines()
+
+                for path in paths:
+                    path = path.strip()
+                    full_url = urljoin(self.base_url, path)
+                    response = requests.get(full_url)
+
+                    if response.status_code == 200:
+                        self._write_to_file(f"Success! {full_url} - Status Code: {response.status_code}")
+                        print(f"Success! {full_url} - Status Code: {response.status_code}")
+                    else:
+                        print(f"Error! {full_url} - Status Code: {response.status_code}")
+
+        except requests.RequestException as e:
+            print(f"Error! {e}")
+        except FileNotFoundError:
+            print(f"Error! {self.filename} dosyası bulunamadı.")
+
+    def _write_to_file(self, message):
+        with open("success.txt", "a") as file:
+            file.write(message + "\n")
+
+if __name__ == "__main__":
+    url_tester = UrlTester()
+    url_tester.test_urls()
