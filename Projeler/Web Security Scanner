@@ -1,0 +1,48 @@
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin, urlparse
+
+def extract_links(url, html_content):
+    # Parse the HTML content of the page to extract all links
+    soup = BeautifulSoup(html_content, 'html.parser')
+    links = []
+    for a_tag in soup.find_all('a', href=True):
+        link = urljoin(url, a_tag['href'])
+        links.append(link)
+    return links
+
+def scan_page(url):
+    try:
+        # Send an HTTP GET request to the specified URL
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        # Handle any errors that may occur during the request
+        print(f"Error: {e}")
+        return
+
+    # Extract all links from the HTML content of the page
+    links = extract_links(url, response.text)
+
+    print(f"Scanning {url}...")
+
+    for link in links:
+        try:
+            # Send an HTTP GET request to each extracted link
+            link_response = requests.get(link)
+            link_response.raise_for_status()
+        except requests.exceptions.RequestException:
+            # Handle any errors that may occur while fetching the link
+            print(f"Failed to retrieve {link}")
+            continue
+
+        # Here, you can perform security scanning.
+        # For example, you could search for a specific text to check for SQL injection.
+
+        # In this example, we are just printing the found links to the console.
+        print(f" - Found link: {link}")
+
+if __name__ == "__main__":
+    # Specify the target URL to scan
+    target_url = "https://example.com"
+    scan_page(target_url)
