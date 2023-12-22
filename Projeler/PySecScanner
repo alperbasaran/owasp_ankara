@@ -1,0 +1,39 @@
+import requests
+
+def check_xss_vulnerability(url):
+    """
+    This function checks for Cross-Site Scripting (XSS) vulnerabilities
+    by testing specific XSS payloads on the given URL.
+
+    :param url: The URL of the web application to test.
+    """
+
+    # List of XSS payloads containing script tags
+    xss_payloads = ["<script>alert('XSS')</script>", "<img src='x' onerror='alert(\"XSS\")'>"]
+
+    print(f"Checking XSS Vulnerability for: {url}")
+
+    for payload in xss_payloads:
+        # Construct the URL with the XSS payload
+        test_url = f"{url}?input={payload}"
+
+        try:
+            # Send an HTTP GET request
+            response = requests.get(test_url)
+            response.raise_for_status()
+
+            # Check for the payload in the response content
+            if payload in response.text:
+                print(f" - Potential XSS Vulnerability Detected: {payload}")
+            else:
+                print(f" - No XSS Vulnerability Detected: {payload}")
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+
+if __name__ == "__main__":
+    # URL of the web application to be checked
+    target_url = "https://example.com/page"
+
+    # Perform XSS Vulnerability check
+    check_xss_vulnerability(target_url)
