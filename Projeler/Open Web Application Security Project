@@ -1,0 +1,38 @@
+# Import the necessary libraries
+from zapv2 import ZAPv2
+
+# Define the target URL to be tested
+target_url = "http://example.com"
+
+# Set up the ZAP API key and URL
+zap_api_key = "your_api_key"  # Replace with your actual ZAP API key
+zap_url = "http://localhost:8080"  # Replace with the actual ZAP proxy URL
+
+# Initialize the ZAP API client
+zap = ZAPv2(apikey=zap_api_key, baseurl=zap_url)
+
+# Enable the necessary ZAP features
+zap.core.new_session(name="example_session")
+
+# Spider the target URL to discover all accessible pages
+print("Spidering target URL...")
+zap.spider.scan(url=target_url)
+
+# Wait for the spider to finish
+zap.spider.wait_to_end()
+
+# Perform an active scan on the discovered URLs
+print("Performing active scan...")
+zap.ascan.scan(url=target_url)
+
+# Wait for the active scan to finish
+zap.ascan.wait_to_end()
+
+# Retrieve and print the alerts (security findings) from the scan
+alerts = zap.core.alerts(baseurl=target_url)
+print("\nSecurity Alerts:")
+for alert in alerts:
+    print(f"Alert: {alert['alert']} at URL: {alert['url']}")
+
+# Shutdown ZAP
+zap.core.shutdown()
